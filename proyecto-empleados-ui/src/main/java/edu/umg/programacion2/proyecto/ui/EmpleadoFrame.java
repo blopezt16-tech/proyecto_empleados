@@ -11,7 +11,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
-
 public class EmpleadoFrame extends JFrame {
 
     private final EmpleadoDAO dao = new EmpleadoDAO();
@@ -21,19 +20,20 @@ public class EmpleadoFrame extends JFrame {
     private final JTextField txtId = new JTextField();
     private final JTextField txtNombre = new JTextField();
     private final JTextField txtDepto = new JTextField();
+    private final JTextField txtCorreo = new JTextField(); // Mejora #1: Campo de texto adicional
     private final JTextField txtSalario = new JTextField();
     private final JTextField txtFecha = new JTextField();
     private final JCheckBox chkActivo = new JCheckBox("Activo", true);
 
     public EmpleadoFrame() {
         setTitle("Gestión de Empleados - UMG");
-        setSize(850, 600);
+        setSize(950, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(10, 10));
 
-        // Formulario superior
-        JPanel formPanel = new JPanel(new GridLayout(6, 2, 8, 8));
+        // Formulario superior con 7 filas
+        JPanel formPanel = new JPanel(new GridLayout(7, 2, 8, 8));
         formPanel.setBorder(BorderFactory.createTitledBorder("Datos del Empleado"));
 
         txtId.setEditable(false);
@@ -46,6 +46,9 @@ public class EmpleadoFrame extends JFrame {
         formPanel.add(new JLabel("Departamento:"));
         formPanel.add(txtDepto);
 
+        formPanel.add(new JLabel("Correo Electrónico:"));
+        formPanel.add(txtCorreo);
+
         formPanel.add(new JLabel("Salario Mensual (Q):"));
         formPanel.add(txtSalario);
 
@@ -57,8 +60,10 @@ public class EmpleadoFrame extends JFrame {
 
         add(formPanel, BorderLayout.NORTH);
 
-        // Tabla central
-        tableModel = new DefaultTableModel(new String[]{"ID", "Nombre", "Departamento", "Salario", "Fecha", "Activo"}, 0) {
+        // Tabla central con columna calculada de Antigüedad (Mejora #6)
+        tableModel = new DefaultTableModel(
+                new String[]{"ID", "Nombre", "Departamento", "Correo", "Salario", "Fecha", "Antigüedad", "Activo"}, 0
+        ) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -100,8 +105,10 @@ public class EmpleadoFrame extends JFrame {
                         emp.getId(),
                         emp.getNombre(),
                         emp.getDepartamento(),
+                        emp.getCorreo(),
                         String.format("%.2f", emp.getSalario()),
                         emp.getFechaContratacion(),
+                        emp.getAntiguedadAnios() + " año(s)", // Mejora #6: Calculado en Java
                         emp.isActivo() ? "Sí" : "No"
                 });
             }
@@ -114,8 +121,15 @@ public class EmpleadoFrame extends JFrame {
         try {
             String nombre = txtNombre.getText().trim();
             String depto = txtDepto.getText().trim();
-            if (nombre.isEmpty() || depto.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "El nombre y departamento no pueden ir vacíos.");
+            String correo = txtCorreo.getText().trim();
+
+            if (nombre.isEmpty() || depto.isEmpty() || correo.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "El nombre, departamento y correo son obligatorios.");
+                return;
+            }
+
+            if (!correo.contains("@") || !correo.contains(".")) {
+                JOptionPane.showMessageDialog(this, "Ingrese un formato de correo válido (ejemplo: usuario@correo.com).");
                 return;
             }
 
@@ -131,7 +145,7 @@ public class EmpleadoFrame extends JFrame {
                 return;
             }
 
-            Empleado emp = new Empleado(nombre, depto, fecha, salario, chkActivo.isSelected());
+            Empleado emp = new Empleado(nombre, depto, correo, fecha, salario, chkActivo.isSelected());
             dao.crear(emp);
             JOptionPane.showMessageDialog(this, "Empleado registrado con éxito.");
             limpiarFormulario();
@@ -156,8 +170,15 @@ public class EmpleadoFrame extends JFrame {
             int id = Integer.parseInt(idStr);
             String nombre = txtNombre.getText().trim();
             String depto = txtDepto.getText().trim();
-            if (nombre.isEmpty() || depto.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "El nombre y departamento son obligatorios.");
+            String correo = txtCorreo.getText().trim();
+
+            if (nombre.isEmpty() || depto.isEmpty() || correo.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "El nombre, departamento y correo son obligatorios.");
+                return;
+            }
+
+            if (!correo.contains("@") || !correo.contains(".")) {
+                JOptionPane.showMessageDialog(this, "Ingrese un formato de correo válido (ejemplo: usuario@correo.com).");
                 return;
             }
 
@@ -173,10 +194,10 @@ public class EmpleadoFrame extends JFrame {
                 return;
             }
 
-            Empleado emp = new Empleado(id, nombre, depto, fecha, salario, chkActivo.isSelected());
+            Empleado emp = new Empleado(id, nombre, depto, correo, fecha, salario, chkActivo.isSelected());
             boolean ok = dao.actualizar(emp);
             if (ok) {
-                JOptionPane.showMessageDialog(this, "Empleado actualizado.");
+                JOptionPane.showMessageDialog(this, "Empleado actualizado con éxito.");
                 limpiarFormulario();
                 cargarDatos();
             }
@@ -212,9 +233,10 @@ public class EmpleadoFrame extends JFrame {
             txtId.setText(tableModel.getValueAt(row, 0).toString());
             txtNombre.setText(tableModel.getValueAt(row, 1).toString());
             txtDepto.setText(tableModel.getValueAt(row, 2).toString());
-            txtSalario.setText(tableModel.getValueAt(row, 3).toString().replace(",", "."));
-            txtFecha.setText(tableModel.getValueAt(row, 4).toString());
-            chkActivo.setSelected("Sí".equalsIgnoreCase(tableModel.getValueAt(row, 5).toString()));
+            txtCorreo.setText(tableModel.getValueAt(row, 3).toString());
+            txtSalario.setText(tableModel.getValueAt(row, 4).toString().replace(",", "."));
+            txtFecha.setText(tableModel.getValueAt(row, 5).toString());
+            chkActivo.setSelected("Sí".equalsIgnoreCase(tableModel.getValueAt(row, 7).toString()));
         }
     }
 
@@ -222,6 +244,7 @@ public class EmpleadoFrame extends JFrame {
         txtId.setText("");
         txtNombre.setText("");
         txtDepto.setText("");
+        txtCorreo.setText("");
         txtSalario.setText("");
         txtFecha.setText("");
         chkActivo.setSelected(true);

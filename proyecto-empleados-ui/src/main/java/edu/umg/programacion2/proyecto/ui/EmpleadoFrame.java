@@ -20,7 +20,7 @@ public class EmpleadoFrame extends JFrame {
     private final JTextField txtId = new JTextField();
     private final JTextField txtNombre = new JTextField();
     private final JTextField txtDepto = new JTextField();
-    private final JTextField txtCorreo = new JTextField(); // Mejora #1: Campo de texto adicional
+    private final JTextField txtCorreo = new JTextField(); 
     private final JTextField txtSalario = new JTextField();
     private final JTextField txtFecha = new JTextField();
     private final JCheckBox chkActivo = new JCheckBox("Activo", true);

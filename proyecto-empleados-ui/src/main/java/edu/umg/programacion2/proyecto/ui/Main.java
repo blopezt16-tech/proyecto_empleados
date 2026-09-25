@@ -67,8 +67,9 @@ public class Main {
         String depto = pedirTextoNoVacio("Departamento: ");
         double salario = pedirSalario();
         LocalDate fecha = pedirFecha();
+        String correo = pedirTextoNoVacio("Correo electrónico: ");
 
-        Empleado nuevo = new Empleado(nombre, depto, fecha, salario, true);
+        Empleado nuevo = new Empleado(nombre, depto, correo,fecha, salario, true);
         dao.crear(nuevo);
         System.out.println("Empleado registrado con éxito (ID asignado: " + nuevo.getId() + ").");
     }
